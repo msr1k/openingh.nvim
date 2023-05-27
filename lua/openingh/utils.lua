@@ -22,9 +22,10 @@ function M.trim(string)
   return (string:gsub("^%s*(.-)%s*$", "%1"))
 end
 
--- url encode all characters matched by given pattern
-function M.encode_uri_component(string, pattern)
-  return (string:gsub(pattern, function (c) return string.format("%%%02X", string.byte(c)) end))
+-- url encode
+-- see: https://datatracker.ietf.org/doc/html/rfc3986#section-2.3
+function M.encode_uri_component(string)
+  return (string:gsub("[^%w_~%.%-]", function (c) return string.format("%%%02X", string.byte(c)) end))
 end
 
 -- returns a table with the host, user/org and the reponame given a github remote url
@@ -84,7 +85,7 @@ end
 function M.get_current_branch_or_commit()
   local current_branch = get_current_branch()
   if current_branch ~= "HEAD" and M.is_branch_upstreamed(current_branch) then
-    return M.encode_uri_component(current_branch, ".")
+    return M.encode_uri_component(current_branch)
   end
 
   local commit_hash = get_current_commit_hash()
@@ -92,7 +93,7 @@ function M.get_current_branch_or_commit()
     return commit_hash
   end
 
-  return M.encode_uri_component(M.get_default_branch(), ".")
+  return M.encode_uri_component(M.get_default_branch())
 end
 
 -- get the active buf relative file path form the .git
@@ -104,7 +105,7 @@ function M.get_current_relative_file_path()
   local relative_file_path_components = M.split(string.sub(absolute_file_path, git_path:len() + 1), "/")
   local encoded_components = {}
   for i, path_component in pairs(relative_file_path_components) do
-    table.insert(encoded_components, i, M.encode_uri_component(path_component, "."))
+    table.insert(encoded_components, i, M.encode_uri_component(path_component))
   end
 
   return "/" .. table.concat(encoded_components, '/')
