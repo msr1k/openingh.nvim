@@ -22,7 +22,7 @@ function M.setup()
   M.repo_url = string.format("http://%s/%s/%s", gh.host, gh.user_or_org, gh.reponame)
 end
 
-M.priority = { BRANCH = 'branch-priority', COMMIT = 'commit-priority', }
+M.priority = { BRANCH = 1, COMMIT = 2, }
 
 local function get_current_branch_or_commit_with_priority(priority)
   if priority == M.priority.BRANCH then
@@ -34,7 +34,7 @@ local function get_current_branch_or_commit_with_priority(priority)
   end
 end
 
-function M.open_file(
+function M.get_file_url(
   priority,
   --[[optional]]
   range_start,
@@ -67,12 +67,10 @@ function M.open_file(
     file_page_url = file_page_url .. "#L" .. range_start .. "-L" .. range_end
   end
 
-  if not utils.open_url(file_page_url) then
-    utils.notify("Could not open the built URL " .. file_page_url, vim.log.levels.ERROR)
-  end
+  return file_page_url
 end
 
-function M.open_repo(priority)
+function M.get_repo_url(priority)
   -- make sure to update the current directory
   M.setup()
   if M.is_no_git_origin then
@@ -80,8 +78,11 @@ function M.open_repo(priority)
     return
   end
 
-
   local url = M.repo_url .. "/tree/" .. get_current_branch_or_commit_with_priority(priority)
+  return url
+end
+
+function M.open_url(url)
   if not utils.open_url(url) then
     utils.notify("Could not open the built URL " .. url, vim.log.levels.ERROR)
   end
